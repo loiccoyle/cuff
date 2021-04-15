@@ -1,0 +1,8 @@
+#!/bin/sh
+#
+# Quick script to run the examples from the help msg.
+
+cuff -r -h | grep '\$' | sed 's/.*$ //' | while read CUFF_CMD ; do
+    printf "Running: %s\n" "$CUFF_CMD"
+    $CUFF_CMD > /dev/null && printf "  SUCCESS\n" || printf "  FAILED\n" >&2
+done
