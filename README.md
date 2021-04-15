@@ -8,32 +8,32 @@ tbd
 
 # Usage
 
-```sh
+```
 $ cuff -h
-Queyr the Jackett search API from the command line.
+Query the Jackett search API from the command line.
 
 Usage:
     cuff [-h] [-v] [-s] [-k] {search, config, indexers, categories, open}
-        -h                              Show this message and exit.
-        -v                              Verbosisty, up to -vv.
-        -s                              Start Jackett server if not running.
-        -k                              Stop Jackett before exiting.
-        -u JACKETT_URL                  Jackett URL.
-        -a API_KEY                      Jackett API key, will query Jackett for it if not provided.
-        -p PASSWORD                     Jackett password.
+        -h                    Show this message and exit.
+        -v                    Verbosisty, up to -vv.
+        -s                    Start Jackett server if not running.
+        -k                    Stop Jackett before exiting.
+        -u JACKETT_URL        Jackett URL.
+        -a API_KEY            Jackett API key, will query Jackett for it if not provided.
+        -p PASSWORD           Jackett password.
 
     cuff search [-f {'json', FORMAT}] [-c CATEGORY] [-t TRACKER] QUERY...
-                                        Perform a search.
-        -f {'json', FORMAT}             Output format in jq syntax, set to 'json' to output in json.
-        -c CATEGORY                     Restrict search to caregories, e.g. '-c movies -c tv'
-        -t TRACKER                      Restrict search to trackers, e.g. '-t legittorrents -t thepiratebay'
-                                        TRACKER must be a configured indexer.
-        -s SORTKEY                      Sort results by key.
+                              Perform a search.
+        -f {'json', FORMAT}   Output format in jq syntax, set to 'json' to output in json.
+        -c CATEGORY           Restrict search to caregories, e.g. '-c movies -c tv'
+        -t TRACKER            Restrict search to trackers, e.g. '-t legittorrents -t thepiratebay'
+                              TRACKER must be a configured indexer.
+        -s SORTKEY            Sort results by key.
 
-    cuff indexers                       List configured indexers.
-    cuff categories                     List torrent categories.
-    cuff config                         Show Jackett config (json).
-    cuff open                           Open the Jackett dashboard using 'qutebrowser'.
+    cuff indexers             List configured indexers.
+    cuff categories           List torrent categories.
+    cuff config               Show Jackett config (json).
+    cuff open                 Open the Jackett dashboard using 'qutebrowser'.
 
 Examples:
     Search for big buck bunny on all configured indexers.
@@ -48,4 +48,4 @@ Examples:
 
 # Completions
 
-Completions for various shells can be found in the `[completions](./completions)` folder.
+Completions for various shells can be found in the [`completions`](./completions) folder.
