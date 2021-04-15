@@ -4,7 +4,20 @@ Query the [Jackett](https://github.com/jackett/jackett) search API from the comm
 
 # Installation
 
-tbd
+### Manual
+
+To manually install `cuff` just git clone this repository and place the script in your `$PATH`:
+```
+git clone https://github.com/loiccoyle/cuff
+cd cuff
+cp cuff /somewhere/in/your/PATH/
+```
+
+If you want <TAB> completion, place the corresponding [completion](~/completions) file somewhere your shell knows about.
+
+# Completions
+
+Completions for various shells can be found in the [`completions`](./completions) folder.
 
 # Usage
 
@@ -46,7 +59,3 @@ Examples:
     Search for ubuntu and output the title and link, format with column.
     $ cuff search -f '\(.Title)|\(.MagnetUri//.Link)' ubuntu | column -t -s"|"
 ```
-
-# Completions
-
-Completions for various shells can be found in the [`completions`](./completions) folder.
