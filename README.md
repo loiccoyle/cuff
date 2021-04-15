@@ -15,18 +15,19 @@ Query the Jackett search API from the command line.
 Usage:
     cuff [-h] [-v] [-s] [-k] {search, config, indexers, categories, open}
         -h                    Show this message and exit.
+        -r                    Raw output, no coloring.
         -v                    Verbosisty, up to -vv.
-        -s                    Start Jackett server if not running.
-        -k                    Stop Jackett before exiting.
+        -s                    Start Jackett service if not running.
+        -k                    Stop Jackett service before exiting.
         -u JACKETT_URL        Jackett URL.
         -a API_KEY            Jackett API key, will query Jackett for it if not provided.
         -p PASSWORD           Jackett password.
 
-    cuff search [-f {'json', FORMAT}] [-c CATEGORY] [-t TRACKER] QUERY...
+    cuff search [-f FORMAT] [-c CATEGORY] [-t TRACKER] QUERY...
                               Perform a search.
-        -f {'json', FORMAT}   Output format in jq syntax, set to 'json' to output in json.
-        -c CATEGORY           Restrict search to caregories, e.g. '-c movies -c tv'
-        -t TRACKER            Restrict search to trackers, e.g. '-t legittorrents -t thepiratebay'
+        -f FORMAT             Output format, in jq syntax, full json output if not provided.
+        -c CATEGORY           Restrict search to caregories.
+        -t TRACKER            Restrict search to trackers.
                               TRACKER must be a configured indexer.
         -s SORTKEY            Sort results by key.
 
@@ -38,12 +39,12 @@ Usage:
 Examples:
     Search for big buck bunny on all configured indexers.
     $ cuff search big buck bunny
-    Search for big buck bunny movies/tv on tpb indexers.
+    Search for big buck bunny movies/tv on tpb indexer.
     $ cuff search -c movies -c tv -t thepiratebay big buck bunny
-    Search for big buck bunny with full json output sorted by Seeders.
-    $ cuff search -f json -s Seeders big buck bunny
-    Search for big buck bunny and output the title and link.
-    $ cuff search -f '\(.Title)|\(.Seeders)|\(.MagnetUri//.Link)' big buck bunny
+    Search for ubuntu sorted by Seeders.
+    $ cuff search -s Seeders ubuntu
+    Search for ubuntu and output the title and link, format with column.
+    $ cuff search -f '\(.Title)|\(.MagnetUri//.Link)' ubuntu | column -t -s"|"
 ```
 
 # Completions
