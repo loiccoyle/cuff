@@ -1,0 +1,46 @@
+#compdef _cuff cuff
+
+CATEGORIES="$(cuff categories 2> /dev/null)"
+INDEXERS="$(cuff indexers 2> /dev/null)"
+
+function _cuff {
+    local line
+    local ret=1
+
+    # completion area for subcommands
+    function _commands {
+        local -a commands
+        commands=(
+            "search" \
+            "indexers" \
+            "categories" \
+            "config" \
+            "open"
+        )
+        _describe "command" commands
+    }
+
+    # completion area for options/arguments
+    _arguments -C \
+        '-h[Show help message and exit]' \
+        '*-v[Increase verbosity]' \
+        '-s[Start jackett.service if not running]' \
+        '-k[Stop jackett.service before exiting]' \
+        '-u[Jackett url]:url:' \
+        '-a[Jackett API key]:key:' \
+        '-p[Password]:password:' \
+        "1: :_commands"  \
+        "*::arg:->args"
+
+    case "$line[1]" in
+        # call completion functions for each nested subcommand here
+        "search" )
+            _arguments \
+            "-f[Output format, use 'json' for full json output]:format:" \
+            "*-c[Search category]:category:($CATEGORIES)" \
+            "*-t[Search tracker]:tracker:($INDEXERS)" \
+            "-s[Sort results by key]:sortkey:" \
+            "*::arg:->args"
+        ;;
+    esac
+}

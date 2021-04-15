@@ -1,0 +1,387 @@
+#!/bin/sh
+#
+# Query the Jackett seach api from the command line.
+# Requires jackett, jq, curl
+
+API_ROOT="api/v2.0"
+CMD_NAME="$(basename "$0")"
+# Jackett categories from::
+# https://github.com/Jackett/Jackett/wiki/Jackett-Categories
+declare -A CATEGORIES
+CATEGORIES["console"]="1000"
+CATEGORIES["console/nds"]="1010"
+CATEGORIES["console/psp"]="1020"
+CATEGORIES["console/wii"]="1030"
+CATEGORIES["console/xbox"]="1040"
+CATEGORIES["console/xbox 360"]="1050"
+CATEGORIES["console/wiiware"]="1060"
+CATEGORIES["console/xbox 360 dlc"]="1070"
+CATEGORIES["console/ps3"]="1080"
+CATEGORIES["console/other"]="1090"
+CATEGORIES["console/3ds"]="1110"
+CATEGORIES["console/ps vita"]="1120"
+CATEGORIES["console/wiiu"]="1130"
+CATEGORIES["console/xbox one"]="1140"
+CATEGORIES["console/ps4"]="1180"
+CATEGORIES["movies"]="2000"
+CATEGORIES["movies/foreign"]="2010"
+CATEGORIES["movies/other"]="2020"
+CATEGORIES["movies/sd"]="2030"
+CATEGORIES["movies/hd"]="2040"
+CATEGORIES["movies/uhd"]="2045"
+CATEGORIES["movies/bluray"]="2050"
+CATEGORIES["movies/3d"]="2060"
+CATEGORIES["movies/dvd"]="2070"
+CATEGORIES["movies/web-dl"]="2080"
+CATEGORIES["audio"]="3000"
+CATEGORIES["audio/mp3"]="3010"
+CATEGORIES["audio/video"]="3020"
+CATEGORIES["audio/audiobook"]="3030"
+CATEGORIES["audio/lossless"]="3040"
+CATEGORIES["audio/other"]="3050"
+CATEGORIES["audio/foreign"]="3060"
+CATEGORIES["pc"]="4000"
+CATEGORIES["pc/0day"]="4010"
+CATEGORIES["pc/iso"]="4020"
+CATEGORIES["pc/mac"]="4030"
+CATEGORIES["pc/mobile-other"]="4040"
+CATEGORIES["pc/games"]="4050"
+CATEGORIES["pc/mobile-ios"]="4060"
+CATEGORIES["pc/mobile-android"]="4070"
+CATEGORIES["tv"]="5000"
+CATEGORIES["tv/web-dl"]="5010"
+CATEGORIES["tv/foreign"]="5020"
+CATEGORIES["tv/sd"]="5030"
+CATEGORIES["tv/hd"]="5040"
+CATEGORIES["tv/uhd"]="5045"
+CATEGORIES["tv/other"]="5050"
+CATEGORIES["tv/sport"]="5060"
+CATEGORIES["tv/anime"]="5070"
+CATEGORIES["tv/documentary"]="5080"
+CATEGORIES["xxx"]="6000"
+CATEGORIES["xxx/dvd"]="6010"
+CATEGORIES["xxx/wmv"]="6020"
+CATEGORIES["xxx/xvid"]="6030"
+CATEGORIES["xxx/x264"]="6040"
+CATEGORIES["xxx/uhd"]="6045"
+CATEGORIES["xxx/pack"]="6050"
+CATEGORIES["xxx/imageset"]="6060"
+CATEGORIES["xxx/other"]="6070"
+CATEGORIES["xxx/sd"]="6080"
+CATEGORIES["xxx/web-dl"]="6090"
+CATEGORIES["books"]="7000"
+CATEGORIES["books/mags"]="7010"
+CATEGORIES["books/ebook"]="7020"
+CATEGORIES["books/comics"]="7030"
+CATEGORIES["books/technical"]="7040"
+CATEGORIES["books/other"]="7050"
+CATEGORIES["books/foreign"]="7060"
+CATEGORIES["other"]="8000"
+CATEGORIES["other/misc"]="8010"
+CATEGORIES["other/hashed"]="8020"
+
+# Used in open subcommand
+OPEN_CMD="${BROWSER:-${OPENER:-"xdg-open"}}"
+
+# Formating codes
+if type tput > /dev/null; then
+    BOLD="$(tput bold)"
+    RESET="$(tput sgr0)"
+    COLOR1="$(tput setaf 1)"
+    COLOR2="$(tput setaf 2)"
+else
+    BOLD=""
+    RESET=""
+    COLOR1=""
+    COLOR2=""
+fi
+
+err_msg_exit() {
+    # Print an error to stderr and exit.
+    printf "%s%s%s%s\n" "${BOLD}" "${COLOR2}" "$*" "${RESET}" >&2
+    exit 1
+}
+
+msg(){
+    # Print a message to stderr.
+    [ "$VERBOSE" -ge "$1" ] && printf "%s%s%s%s\n" "${BOLD}" "${COLOR1}" "$2" "${RESET}" >&2
+}
+
+# Check requirements
+type curl > /dev/null || err_msg_exit "'curl' not found."
+type jq > /dev/null || err_msg_exit "'jq' not found."
+systemctl list-unit-files jackett.service > /dev/null || err_msg_exit "'jackett.service' not found."
+
+usage(){
+    printf "%sQuery the Jackett search API from the command line.%s
+
+%sUsage:%s
+    %s [-h] [-v] [-s] [-k] {search, config, indexers, categories, open}
+        -h                              Show this message and exit.
+        -v                              Verbosisty, up to -vv.
+        -s                              Start Jackett server if not running.
+        -k                              Stop Jackett before exiting.
+        -u JACKETT_URL                  Jackett URL.
+        -a API_KEY                      Jackett API key, will query Jackett for it if not provided.
+        -p PASSWORD                     Jackett password.
+
+    %s search [-f {'json', FORMAT}] [-c CATEGORY] [-t TRACKER] QUERY...
+                                        Perform a search.
+        -f {'json', FORMAT}             Output format in jq syntax, set to 'json' to output in json.
+        -c CATEGORY                     Restrict search to caregories, e.g. '-c movies -c tv'
+        -t TRACKER                      Restrict search to trackers, e.g. '-t legittorrents -t thepiratebay'
+                                        TRACKER must be a configured indexer.
+        -s SORTKEY                      Sort results by key.
+
+    %s indexers                       List configured indexers.
+    %s categories                     List torrent categories.
+    %s config                         Show Jackett config (json).
+    %s open                           Open the Jackett dashboard using '%s'.
+
+%sExamples:%s
+    Search for big buck bunny on all configured indexers.
+    %s$ %s search big buck bunny%s
+    Search for big buck bunny movies/tv on tpb indexers.
+    %s$ %s search -c movies -c tv -t thepiratebay big buck bunny%s
+    Search for big buck bunny with full json output sorted by Seeders.
+    %s$ %s search -f json -s Seeders big buck bunny%s
+    Search for big buck bunny and output the title and link.
+    %s$ %s search -f '\(.Title)|\(.Seeders)|\(.MagnetUri//.Link)' big buck bunny%s
+" "$BOLD" "$RESET"\
+  "$BOLD" "$RESET" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$OPEN_CMD"\
+  "$BOLD" "$RESET"\
+    "$COLOR2" "$CMD_NAME" "$RESET"\
+    "$COLOR2" "$CMD_NAME" "$RESET"\
+    "$COLOR2" "$CMD_NAME" "$RESET"\
+    "$COLOR2" "$CMD_NAME" "$RESET"
+}
+
+check_jackett() {
+    # Check if the Jackett service is active.
+    [ "$(systemctl is-active jackett.service)" = "active" ]
+}
+
+join_by() {
+    # Join elements of array on string.
+    # From: https://stackoverflow.com/questions/1527049/how-can-i-join-elements-of-an-array-in-bash
+    # Args:
+    #   $1: join string
+    #   $2: array
+    # Example:
+    #   $ join_by "&a=" x y z
+    #   &a=x&a=y&a=z
+    local d=${1-} f=${2-}
+    if shift 2; then
+        printf "%s" "$f" "${@/#/$d}"
+    fi
+}
+
+config(){
+    # Query Jackett for the server's configuration.
+    local endpoint="server/config"
+    local url="$JACKETT_URL/$API_ROOT/$endpoint?$ID_PARAMETER"
+    local response="$(curl --silent "$url"\
+        -H "$COOKIE_HEADER")"
+    printf "%s" "$response" | jq -r
+}
+
+indexers(){
+    # Query Jackett for the configured indexers.
+    local endpoint="indexers"
+    local url="$JACKETT_URL/$API_ROOT/$endpoint?$ID_PARAMETER"
+    local response="$(curl --silent "$url"\
+        -H "$COOKIE_HEADER")"
+    printf "%s" "$response" | jq -r ".[] | select(.configured == true) | .id"
+}
+
+search(){
+    # Perform a search.
+    # Args:
+    #   $1: Search query
+    #   $2: Category array
+    #   $3: Tacker array
+    local query="$1"
+    declare -a categories=($2)
+    declare -a trackers=($3)
+    local category_str
+    local tracker_str
+    [ "${#categories[@]}" -gt 0 ] && category_str="&Category%5B%5D=$(join_by '&Category%5B%5D=' "${categories[@]}")"
+    [ "${#trackers[@]}" -gt 0 ] && tracker_str="&Tracker%5B%5D=$(join_by '&Tracker%5B%5D=' "${trackers[@]}")"
+    local endpoint="indexers/all/results?${tracker_str}${category_str}&${ID_PARAMETER}"
+    local url="$JACKETT_URL/$API_ROOT/$endpoint"
+    local reponse="$(curl --silent -G "$url"\
+        -H "$COOKIE_HEADER"\
+        --data-urlencode "Query=$query"\
+        --data-urlencode "apikey=$API_KEY"\
+        --compressed)"
+    printf "%s" "$reponse" | jq -r ".Results"
+}
+
+stop_jackett(){
+    # Stop the jackett service if it is running.
+    check_jackett && { msg 1 "Stopping Jackett."; sudo systemctl stop jackett.service; }
+}
+
+# Defaults
+VERBOSE=0
+JACKETT_URL="http://localhost:9117"
+API_KEY=""
+PASSWORD=""
+START=""
+STOP=""
+# Parse options to the command
+while getopts ":hvsku:a:p:" opt; do
+    case ${opt} in
+        "h" )
+            usage
+            exit 0
+            ;;
+        "v" )
+            VERBOSE=$((VERBOSE + 1))
+            ;;
+        "s" )
+            START=1
+            ;;
+        "k" )
+            STOP=1
+            ;;
+        "u" )
+            JACKETT_URL="$OPTARG"
+            msg 2 "Using Jackett url: \"$JACKETT_URL\""
+            ;;
+        "a" )
+            API_KEY="$OPTARG"
+            msg 2 "Using API key: \"$API_KEY\""
+            ;;
+        "p" )
+            PASSWORD="$OPTARG"
+            msg 2 "Using password: \"$PASSWORD\""
+            ;;
+        "?" )
+            usage >&2
+            err_msg_exit "Invalid Option: -$OPTARG"
+            ;;
+    esac
+done
+shift $((OPTIND -1))
+
+# Subcommands which don't require Jackett to be running.
+subcommand="$1"
+case "$subcommand" in
+    "categories" )
+        # Show keys of associative array
+        # from: https://stackoverflow.com/questions/53740886/bash-associative-array-iteration-ordered-and-without-duplicates
+        printf "%s\n" "${!CATEGORIES[@]}" | cut -d, -f1 | sort
+        exit 0
+        ;;
+    "open" )
+        msg 1 "Opening with \"$OPEN_CMD\""
+        $OPEN_CMD "$JACKETT_URL" && exit 0
+        ;;
+    "")
+        usage
+        exit 0
+        ;;
+esac
+
+# Start Jackett
+if [ -n "$START" ]; then
+    # TODO: figure what to do about this sleep
+    check_jackett || { msg 1 "Starting Jackett"; sudo systemctl start jackett.service > /dev/null && sleep 5; }
+fi
+
+check_jackett || err_msg_exit "'jackett.service' is not active."
+
+# Add a trap on exit to kill the Jackett server.
+[ -n "$STOP" ] && trap stop_jackett EXIT
+
+# Try to login
+reponse="$(curl -L --silent --output /dev/null "$JACKETT_URL/UI/Dashboard" --data-urlencode "password=$PASSWORD" -c - | tail -1)"
+[ -z "$reponse" ] && err_msg_exit "Could not get the authentication cookie from $JACKETT_URL/UI/Dashboard. Check the Jackett url and password."
+
+# Get the authentication cookie
+declare -a contents=(${reponse//\\t/})
+ID="${contents[4]}"
+COOKIE="${contents[5]}=${contents[6]}"
+COOKIE_HEADER="Cookie: $COOKIE;"
+ID_PARAMETER="_=$ID"
+msg 2 "Authentication cookie: \"$COOKIE\""
+msg 2 "Underscore id: \"$ID\""
+# Fetch the api key as it was not provided
+if [ -z "$API_KEY" ];then
+    API_KEY="$(config | jq -r ".api_key")"
+    msg 1 "Fetched API key: \"$API_KEY\""
+fi
+
+# Defaults
+FILTER_CATEGORIES=()
+FILTER_TRACKERS=()
+# TODO: maybe get rid of this formatting and always return in json ?
+FORMAT='\(.Tracker)|\(.Title[:50])|\(.Size)|\(.Seeders)|\(.Peers)|\(.MagnetUri//.Link)'
+SORTKEY=""
+
+# msg 3 "Using subcommand: '$subcommand'"
+# msg 3 "Args: '$*'"
+case "$subcommand" in
+    # Parse options of the subcommand
+    "search" )
+        # Remove subcommand from the argument list
+        shift
+        # Reset position of argument parsing
+        OPTIND=0
+        while getopts ":f:c:t:s:" opt; do
+            case ${opt} in
+                "f" )
+                    FORMAT="$OPTARG"
+                    ;;
+                "c" )
+                    FILTER_CATEGORIES+=("${CATEGORIES[$OPTARG]}")
+                    ;;
+                "t" )
+                    FILTER_TRACKERS+=("$OPTARG")
+                    ;;
+                "s" )
+                    SORTKEY="$OPTARG"
+                    ;;
+                ":" )
+                    usage >&2
+                    err_msg_exit "Missing argument for option -$OPTARG"
+                    ;;
+                "?" )
+                    usage >&2
+                    err_msg_exit "Invalid Option: -$OPTARG"
+                    ;;
+            esac
+        done
+        shift $((OPTIND -1))
+        QUERY="$*"
+        [ -z "$QUERY" ] && usage >&2 && err_msg_exit "No search query provided."
+        msg 2 "Trackers: ${FILTER_TRACKERS[*]}"
+        msg 2 "Categories: ${FILTER_CATEGORIES[*]}"
+        msg 2 "Query: \"$QUERY\""
+        msg 2 "Using format: $FORMAT"
+        msg 2 "Using sortkey: \"$SORTKEY\""
+        OUT="$(search "$QUERY" "${FILTER_CATEGORIES[*]}" "${FILTER_TRACKERS[*]}")"
+
+        # TODO: cleanup & optimize the number of jq calls...
+        [ -n "$SORTKEY" ] && OUT="$(printf "%s" "$OUT" | jq -r "[.[]] | sort_by(.$SORTKEY) | reverse")"
+
+        [ "$FORMAT" = "json" ] && printf "%s\n" "$OUT" && exit 0
+
+        if [ -n "$FORMAT" ]; then
+            OUT="$(printf "%s" "$OUT" | jq -r ".[] | \"$FORMAT\"" | column --table --separator "|")"
+        fi
+        printf "%s\n" "$OUT"
+        ;;
+
+    "config" )
+        config
+        ;;
+    "indexers" )
+        indexers
+        ;;
+    * )
+        usage >&2
+        err_msg_exit "Invalid argument \"$subcommand\" should be either 'search', 'config', 'indexers' 'categories', or 'open'."
+        ;;
+esac
