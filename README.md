@@ -1,4 +1,6 @@
 # Cuff
+<a href="./LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+<a href="https://aur.archlinux.org/packages/cuff-git/"><img src="https://img.shields.io/aur/version/cuff-git"></a>
 
 Query the [Jackett](https://github.com/jackett/jackett) search API from the command line.
 
