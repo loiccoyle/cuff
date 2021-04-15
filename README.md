@@ -59,3 +59,7 @@ Examples:
     Search for ubuntu and output the title and link, format with column.
     $ cuff search -f '\(.Title)|\(.MagnetUri//.Link)' ubuntu | column -t -s"|"
 ```
+
+# TODO
+- [ ] AUR package
+- [ ] write bash completion
