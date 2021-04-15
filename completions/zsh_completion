@@ -1,7 +1,8 @@
 #compdef _cuff cuff
 
-CATEGORIES="$(cuff categories 2> /dev/null)"
-INDEXERS="$(cuff indexers 2> /dev/null)"
+IFS=$'\n'
+CATEGORIES="$(printf '"%s" ' $(cuff categories 2> /dev/null))"
+INDEXERS="$(printf '"%s" ' $(cuff indexers 2> /dev/null))"
 
 function _cuff {
     local line
@@ -23,6 +24,7 @@ function _cuff {
     # completion area for options/arguments
     _arguments -C \
         '-h[Show help message and exit]' \
+        '-r[Raw output, no coloring.]' \
         '*-v[Increase verbosity]' \
         '-s[Start jackett.service if not running]' \
         '-k[Stop jackett.service before exiting]' \
