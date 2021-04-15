@@ -191,7 +191,7 @@ indexers(){
     local url="$JACKETT_URL/$API_ROOT/$endpoint?$ID_PARAMETER"
     local response="$(curl --silent "$url"\
         -H "$COOKIE_HEADER")"
-    printf "%s" "$response" | jq -r ".[] | select(.configured == true) | .id"
+    printf "%s" "$response" | jq -r ".[] | select(.configured == true).id"
 }
 
 search(){
@@ -271,7 +271,7 @@ case "$subcommand" in
     "categories" )
         # Show keys of associative array
         # from: https://stackoverflow.com/questions/53740886/bash-associative-array-iteration-ordered-and-without-duplicates
-        printf "%s\n" "${!CATEGORIES[@]}" | cut -d, -f1 | sort
+        printf "%s\n" "${!CATEGORIES[@]}" | sort
         exit 0
         ;;
     "open" )
