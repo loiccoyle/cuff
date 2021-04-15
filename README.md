@@ -13,11 +13,11 @@ cd cuff
 cp cuff /somewhere/in/your/PATH/
 ```
 
-If you want <TAB> completion, place the corresponding [completion](~/completions) file somewhere your shell knows about.
+If you want <TAB> completion, place the corresponding [`completion`](completions) file somewhere your shell knows about.
 
 # Completions
 
-Completions for various shells can be found in the [`completions`](./completions) folder.
+Completions for various shells can be found in the [`completions`](completions) folder.
 
 # Usage
 
