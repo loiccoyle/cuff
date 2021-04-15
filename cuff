@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Query the Jackett seach api from the command line.
+# Query the Jackett search API from the command line.
 # Requires jackett, jq, curl
 
 API_ROOT="api/v2.0"
@@ -320,7 +320,7 @@ ID_PARAMETER="_=$ID"
 msg 2 "Authentication cookie: \"$COOKIE\""
 msg 2 "Underscore id: \"$ID\""
 # Fetch the api key as it was not provided
-if [ -z "$API_KEY" ];then
+if [ -z "$API_KEY" ]; then
     API_KEY="$(config | jq -r ".api_key")"
     msg 1 "Fetched API key: \"$API_KEY\""
 fi
