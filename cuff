@@ -331,8 +331,6 @@ FILTER_TRACKERS=()
 FORMAT=""
 SORTKEY=""
 
-# msg 3 "Using subcommand: '$subcommand'"
-# msg 3 "Args: '$*'"
 case "$subcommand" in
     # Parse options of the subcommand
     "search" )
