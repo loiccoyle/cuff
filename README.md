@@ -15,6 +15,13 @@ cp cuff /somewhere/in/your/PATH/
 
 If you want <TAB> completion, place the corresponding [`completion`](completions) file somewhere your shell knows about.
 
+### Arch linux
+
+Using your prefered AUR helper:
+```
+paru -S cuff-git
+```
+
 # Completions
 
 Completions for various shells can be found in the [`completions`](completions) folder.
@@ -61,5 +68,5 @@ Examples:
 ```
 
 # TODO
-- [ ] AUR package
+- [x] AUR package
 - [ ] write bash completion
