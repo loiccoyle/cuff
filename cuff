@@ -102,7 +102,7 @@ err_msg_exit() {
     exit 1
 }
 
-msg(){
+msg() {
     # Print a message to stderr.
     [ "$VERBOSE" -ge "$1" ] && printf "%s%s%s%s\n" "${BOLD}" "${COLOR1}" "$2" "${RESET}" >&2
 }
@@ -112,12 +112,13 @@ type curl > /dev/null || err_msg_exit "'curl' not found."
 type jq > /dev/null || err_msg_exit "'jq' not found."
 systemctl list-unit-files jackett.service > /dev/null || err_msg_exit "'jackett.service' not found."
 
-usage(){
+usage() {
     printf "%sQuery the Jackett search API from the command line.%s
 
 %sUsage:%s
     %s [-h] [-v] [-s] [-k] {search, config, indexers, categories, open}
         -h                    Show this message and exit.
+        -r                    Raw output, no coloring.
         -v                    Verbosisty, up to -vv.
         -s                    Start Jackett service if not running.
         -k                    Stop Jackett service before exiting.
@@ -125,11 +126,11 @@ usage(){
         -a API_KEY            Jackett API key, will query Jackett for it if not provided.
         -p PASSWORD           Jackett password.
 
-    %s search [-f {'json', FORMAT}] [-c CATEGORY] [-t TRACKER] QUERY...
+    %s search [-f FORMAT] [-c CATEGORY] [-t TRACKER] QUERY...
                               Perform a search.
         -f FORMAT             Output format, in jq syntax, full json output if not provided.
-        -c CATEGORY           Restrict search to caregories, e.g. '-c movies -c tv'
-        -t TRACKER            Restrict search to trackers, e.g. '-t legittorrents -t thepiratebay'
+        -c CATEGORY           Restrict search to caregories.
+        -t TRACKER            Restrict search to trackers.
                               TRACKER must be a configured indexer.
         -s SORTKEY            Sort results by key.
 
@@ -141,12 +142,12 @@ usage(){
 %sExamples:%s
     Search for big buck bunny on all configured indexers.
     %s$ %s search big buck bunny%s
-    Search for big buck bunny movies/tv on tpb indexers.
+    Search for big buck bunny movies/tv on tpb indexer.
     %s$ %s search -c movies -c tv -t thepiratebay big buck bunny%s
-    Search for ubuntu with full json output sorted by Seeders.
-    %s$ %s search -f json -s Seeders ubuntu%s
-    Search for ubuntu and output the title, number of seeders and link, format with column.
-    %s$ %s search -f '\(.Title)|\(.Seeders)|\(.MagnetUri//.Link)' ubuntu | column -t -s\"|\"%s
+    Search for ubuntu sorted by Seeders.
+    %s$ %s search -s Seeders ubuntu%s
+    Search for ubuntu and output the title and link, format with column.
+    %s$ %s search -f '\(.Title)|\(.MagnetUri//.Link)' ubuntu | column -t -s\"|\"%s
 " "$BOLD" "$RESET"\
   "$BOLD" "$RESET" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$OPEN_CMD"\
   "$BOLD" "$RESET"\
@@ -176,48 +177,46 @@ join_by() {
     fi
 }
 
-config(){
+config() {
     # Query Jackett for the server's configuration.
     local endpoint="server/config"
     local url="$JACKETT_URL/$API_ROOT/$endpoint?$ID_PARAMETER"
-    local response="$(curl --silent "$url"\
-        -H "$COOKIE_HEADER")"
-    printf "%s" "$response" | jq -r
+    curl --silent "$url" -H "$COOKIE_HEADER" | $JQ_COMMAND
 }
 
-indexers(){
+indexers() {
     # Query Jackett for the configured indexers.
     local endpoint="indexers"
     local url="$JACKETT_URL/$API_ROOT/$endpoint?$ID_PARAMETER"
-    local response="$(curl --silent "$url"\
-        -H "$COOKIE_HEADER")"
-    printf "%s" "$response" | jq -r ".[] | select(.configured == true).id"
+    curl --silent "$url"\
+        -H "$COOKIE_HEADER" | jq -r ".[] | select(.configured == true).id"
 }
 
-search(){
+search() {
     # Perform a search.
     # Args:
     #   $1: Search query
     #   $2: Category array
     #   $3: Tacker array
+    #   $4: jq filter
     local query="$1"
     declare -a categories=($2)
     declare -a trackers=($3)
+    local jq_arg="$4"
     local category_str
     local tracker_str
     [ "${#categories[@]}" -gt 0 ] && category_str="&Category%5B%5D=$(join_by '&Category%5B%5D=' "${categories[@]}")"
     [ "${#trackers[@]}" -gt 0 ] && tracker_str="&Tracker%5B%5D=$(join_by '&Tracker%5B%5D=' "${trackers[@]}")"
     local endpoint="indexers/all/results?${tracker_str}${category_str}&${ID_PARAMETER}"
     local url="$JACKETT_URL/$API_ROOT/$endpoint"
-    local reponse="$(curl --silent -G "$url"\
+    curl --silent -G "$url"\
         -H "$COOKIE_HEADER"\
         --data-urlencode "Query=$query"\
         --data-urlencode "apikey=$API_KEY"\
-        --compressed)"
-    printf "%s" "$reponse" | jq -r ".Results"
+        --compressed | $JQ_COMMAND "$jq_arg"
 }
 
-stop_jackett(){
+stop_jackett() {
     # Stop the jackett service if it is running.
     check_jackett && { msg 1 "Stopping Jackett."; sudo systemctl stop jackett.service; }
 }
@@ -229,9 +228,18 @@ API_KEY=""
 PASSWORD=""
 START=""
 STOP=""
+JQ_COMMAND="jq"
 # Parse options to the command
-while getopts ":hvsku:a:p:" opt; do
+while getopts ":rhvsku:a:p:" opt; do
     case ${opt} in
+        "r" )
+            BOLD=""
+            RESET=""
+            COLOR1=""
+            COLOR2=""
+            JQ_COMMAND="jq --monochrome-output -r"
+            msg 2 "Raw output."
+            ;;
         "h" )
             usage
             exit 0
@@ -320,10 +328,7 @@ fi
 # Defaults
 FILTER_CATEGORIES=()
 FILTER_TRACKERS=()
-# TODO: maybe get rid of this formatting and always return in json?
-# TODO: Is there a way to not have to escape the parenthesis?
-# FORMAT='\(.Tracker)|\(.Title[:50])|\(.Size)|\(.Seeders)|\(.Peers)|\(.MagnetUri//.Link)'
-FORMAT='json'
+FORMAT=""
 SORTKEY=""
 
 # msg 3 "Using subcommand: '$subcommand'"
@@ -361,25 +366,20 @@ case "$subcommand" in
         done
         shift $((OPTIND -1))
         QUERY="$*"
-        [ -z "$QUERY" ] && usage >&2 && err_msg_exit "No search query provided."
+        # [ -z "$QUERY" ] && usage >&2 && err_msg_exit "No search query provided."
         msg 2 "Trackers: ${FILTER_TRACKERS[*]}"
         msg 2 "Categories: ${FILTER_CATEGORIES[*]}"
         msg 2 "Query: \"$QUERY\""
         msg 2 "Using format: $FORMAT"
         msg 2 "Using sortkey: \"$SORTKEY\""
-        OUT="$(search "$QUERY" "${FILTER_CATEGORIES[*]}" "${FILTER_TRACKERS[*]}")"
 
-        # TODO: cleanup & optimize the number of jq calls...
-        [ -n "$SORTKEY" ] && OUT="$(printf "%s" "$OUT" | jq -r "[.[]] | sort_by(.$SORTKEY) | reverse")"
-
-        [ "$FORMAT" = "json" ] && printf "%s\n" "$OUT" && exit 0
-
-        if [ -n "$FORMAT" ]; then
-            OUT="$(printf "%s" "$OUT" | jq -r ".[] | \"$FORMAT\"")"
-        fi
-        printf "%s\n" "$OUT"
+        JQ_ARG=".Results"
+        [ -n "$SORTKEY" ] && JQ_ARG="$JQ_ARG | sort_by(.$SORTKEY) | reverse"
+        [ -n "$FORMAT" ] && JQ_ARG="$JQ_ARG[] | \"$FORMAT\""
+        msg 2 "jq filter: \"$JQ_ARG\""
+        # Make the query
+        search "$QUERY" "${FILTER_CATEGORIES[*]}" "${FILTER_TRACKERS[*]}" "$JQ_ARG"
         ;;
-
     "config" )
         config
         ;;
