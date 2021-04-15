@@ -285,9 +285,13 @@ case "$subcommand" in
 esac
 
 # Start Jackett
-if [ -n "$START" ]; then
-    # TODO: figure what to do about this sleep
-    check_jackett || { msg 1 "Starting Jackett"; sudo systemctl start jackett.service > /dev/null && sleep 5; }
+if [ -n "$START" ] & ! check_jackett ; then
+    msg 1 "Starting Jackett"
+    sudo systemctl start jackett.service > /dev/null
+    # Wait until the server is repsonsive, max of 5s
+    for((i=0; i < 10; i++)); do
+      curl --silent $JACKETT_URL > /dev/null && break || sleep 0.5
+    done
 fi
 
 check_jackett || err_msg_exit "'jackett.service' is not active."
