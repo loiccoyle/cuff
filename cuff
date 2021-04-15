@@ -5,7 +5,7 @@
 
 API_ROOT="api/v2.0"
 CMD_NAME="$(basename "$0")"
-# Jackett categories from::
+# Jackett categories from:
 # https://github.com/Jackett/Jackett/wiki/Jackett-Categories
 declare -A CATEGORIES
 CATEGORIES["console"]="1000"
@@ -119,15 +119,15 @@ usage(){
     %s [-h] [-v] [-s] [-k] {search, config, indexers, categories, open}
         -h                    Show this message and exit.
         -v                    Verbosisty, up to -vv.
-        -s                    Start Jackett server if not running.
-        -k                    Stop Jackett before exiting.
+        -s                    Start Jackett service if not running.
+        -k                    Stop Jackett service before exiting.
         -u JACKETT_URL        Jackett URL.
         -a API_KEY            Jackett API key, will query Jackett for it if not provided.
         -p PASSWORD           Jackett password.
 
     %s search [-f {'json', FORMAT}] [-c CATEGORY] [-t TRACKER] QUERY...
                               Perform a search.
-        -f {'json', FORMAT}   Output format in jq syntax, set to 'json' to output in json.
+        -f {'json', FORMAT}   Output format, in jq syntax, use 'json' to output in json.
         -c CATEGORY           Restrict search to caregories, e.g. '-c movies -c tv'
         -t TRACKER            Restrict search to trackers, e.g. '-t legittorrents -t thepiratebay'
                               TRACKER must be a configured indexer.
@@ -145,7 +145,7 @@ usage(){
     %s$ %s search -c movies -c tv -t thepiratebay big buck bunny%s
     Search for big buck bunny with full json output sorted by Seeders.
     %s$ %s search -f json -s Seeders big buck bunny%s
-    Search for big buck bunny and output the title and link.
+    Search for big buck bunny and output the title, number of seeders and link.
     %s$ %s search -f '\(.Title)|\(.Seeders)|\(.MagnetUri//.Link)' big buck bunny%s
 " "$BOLD" "$RESET"\
   "$BOLD" "$RESET" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$OPEN_CMD"\
@@ -316,7 +316,8 @@ fi
 # Defaults
 FILTER_CATEGORIES=()
 FILTER_TRACKERS=()
-# TODO: maybe get rid of this formatting and always return in json ?
+# TODO: maybe get rid of this formatting and always return in json?
+# TODO: Is there a way to not have to escape the parenthesis?
 FORMAT='\(.Tracker)|\(.Title[:50])|\(.Size)|\(.Seeders)|\(.Peers)|\(.MagnetUri//.Link)'
 SORTKEY=""
 
