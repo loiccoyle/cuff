@@ -127,7 +127,7 @@ usage(){
 
     %s search [-f {'json', FORMAT}] [-c CATEGORY] [-t TRACKER] QUERY...
                               Perform a search.
-        -f {'json', FORMAT}   Output format, in jq syntax, use 'json' to output in json.
+        -f FORMAT             Output format, in jq syntax, full json output if not provided.
         -c CATEGORY           Restrict search to caregories, e.g. '-c movies -c tv'
         -t TRACKER            Restrict search to trackers, e.g. '-t legittorrents -t thepiratebay'
                               TRACKER must be a configured indexer.
@@ -143,10 +143,10 @@ usage(){
     %s$ %s search big buck bunny%s
     Search for big buck bunny movies/tv on tpb indexers.
     %s$ %s search -c movies -c tv -t thepiratebay big buck bunny%s
-    Search for big buck bunny with full json output sorted by Seeders.
-    %s$ %s search -f json -s Seeders big buck bunny%s
-    Search for big buck bunny and output the title, number of seeders and link.
-    %s$ %s search -f '\(.Title)|\(.Seeders)|\(.MagnetUri//.Link)' big buck bunny%s
+    Search for ubuntu with full json output sorted by Seeders.
+    %s$ %s search -f json -s Seeders ubuntu%s
+    Search for ubuntu and output the title, number of seeders and link, format with column.
+    %s$ %s search -f '\(.Title)|\(.Seeders)|\(.MagnetUri//.Link)' ubuntu | column -t -s\"|\"%s
 " "$BOLD" "$RESET"\
   "$BOLD" "$RESET" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$OPEN_CMD"\
   "$BOLD" "$RESET"\
@@ -322,7 +322,8 @@ FILTER_CATEGORIES=()
 FILTER_TRACKERS=()
 # TODO: maybe get rid of this formatting and always return in json?
 # TODO: Is there a way to not have to escape the parenthesis?
-FORMAT='\(.Tracker)|\(.Title[:50])|\(.Size)|\(.Seeders)|\(.Peers)|\(.MagnetUri//.Link)'
+# FORMAT='\(.Tracker)|\(.Title[:50])|\(.Size)|\(.Seeders)|\(.Peers)|\(.MagnetUri//.Link)'
+FORMAT='json'
 SORTKEY=""
 
 # msg 3 "Using subcommand: '$subcommand'"
@@ -374,7 +375,7 @@ case "$subcommand" in
         [ "$FORMAT" = "json" ] && printf "%s\n" "$OUT" && exit 0
 
         if [ -n "$FORMAT" ]; then
-            OUT="$(printf "%s" "$OUT" | jq -r ".[] | \"$FORMAT\"" | column --table --separator "|")"
+            OUT="$(printf "%s" "$OUT" | jq -r ".[] | \"$FORMAT\"")"
         fi
         printf "%s\n" "$OUT"
         ;;
