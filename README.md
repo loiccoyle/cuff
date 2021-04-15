@@ -6,6 +6,13 @@ Query the [Jackett](https://github.com/jackett/jackett) search API from the comm
 
 # Installation
 
+### Dependencies
+
+If you are installing manually, you'll need to also install the following dependencies:
+* [`curl`](https://github.com/curl/curl)
+* [`jq`](https://github.com/stedolan/jq)
+* Access to a [`jackett`](https://github.com/jackett/jackett) server.
+
 ### Manual
 
 To manually install `cuff` just git clone this repository and place the script in your `$PATH`:
