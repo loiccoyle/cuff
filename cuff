@@ -154,9 +154,19 @@ usage() {
     "$COLOR2" "$CMD_NAME" "$RESET"
 }
 
+has_jackett() {
+    # Check to see if the jackett service file is installed.
+    systemctl list-unit-files jackett.service > /dev/null
+}
+
 check_jackett() {
     # Check if the Jackett service is active.
-    [ "$(systemctl is-active jackett.service)" = "active" ]
+    systemctl is-active jackett.service > /dev/null
+}
+
+stop_jackett() {
+    # Stop the jackett service if it is running.
+    check_jackett && { msg 1 "Stopping Jackett."; sudo systemctl stop jackett.service; }
 }
 
 join_by() {
@@ -213,11 +223,6 @@ search() {
         --compressed | $JQ_COMMAND "$jq_arg"
 }
 
-stop_jackett() {
-    # Stop the jackett service if it is running.
-    check_jackett && { msg 1 "Stopping Jackett."; sudo systemctl stop jackett.service; }
-}
-
 # Defaults
 VERBOSE=0
 JACKETT_URL="http://localhost:9117"
@@ -245,9 +250,11 @@ while getopts ":rhvsku:a:p:" opt; do
             VERBOSE=$((VERBOSE + 1))
             ;;
         "s" )
+            has_jackett || err_msg_exit "No jackett service file found."
             START=1
             ;;
         "k" )
+            has_jackett || err_msg_exit "No jackett service file found."
             STOP=1
             ;;
         "u" )
@@ -283,10 +290,13 @@ case "$subcommand" in
         msg 1 "Opening with \"$OPEN_CMD\""
         $OPEN_CMD "$JACKETT_URL" && exit 0
         ;;
-    "")
+    "" )
         usage
         exit 0
         ;;
+    "search" | "config" | "indexers" )
+      # Just to not trigger invalid argument here.
+      ;;
     * )
         usage >&2
         err_msg_exit "Invalid argument \"$subcommand\" should be either 'search', 'config', 'indexers' 'categories', or 'open'."
