@@ -290,7 +290,7 @@ case "$subcommand" in
 esac
 
 # Start Jackett
-if [ -n "$START" ] & ! check_jackett ; then
+if [ -n "$START" ] && ! check_jackett ; then
     msg 1 "Starting Jackett"
     sudo systemctl start jackett.service > /dev/null
     # Wait until the server is repsonsive, max of 5s
