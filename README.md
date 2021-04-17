@@ -42,24 +42,21 @@ $ cuff -h
 Query the Jackett search API from the command line.
 
 Usage:
-    cuff [-h] [-v] [-s] [-k] {search, config, indexers, categories, open}
-        -h                    Show this message and exit.
-        -r                    Raw output, no coloring.
-        -v                    Verbosisty, up to -vv.
-        -s                    Start Jackett service if not running.
-        -k                    Stop Jackett service before exiting.
-        -u JACKETT_URL        Jackett URL.
-        -a API_KEY            Jackett API key, will query Jackett for it if not provided.
-        -p PASSWORD           Jackett password.
-
-    cuff search [-f FORMAT] [-c CATEGORY] [-t TRACKER] QUERY...
-                              Perform a search.
-        -f FORMAT             Output format, in jq syntax, full json output if not provided.
-        -c CATEGORY           Restrict search to caregories.
-        -t TRACKER            Restrict search to trackers.
-                              TRACKER must be a configured indexer.
-        -s SORTKEY            Sort results by key.
-
+    cuff [OPTIONS] {search, config, indexers, categories, open}
+        -h                        Show this message and exit.
+        -r                        Raw output, no coloring.
+        -v                        Verbosisty, up to -vv.
+        -s                        Start Jackett service if not running.
+        -k                        Stop Jackett service before exiting.
+        -u JACKETT_URL            Jackett URL.
+        -a API_KEY                Jackett API key, will query Jackett if not provided.
+        -p PASSWORD               Jackett password.
+    cuff search [OPTIONS] QUERY   Perform a search.
+        -f FORMAT                 Output format, in jq syntax, full json output if not provided.
+        -c CATEGORY               Restrict search to caregories.
+        -t TRACKER                Restrict search to trackers.
+                                  TRACKER must be a configured indexer.
+        -s SORTKEY                Sort results by key.
     cuff indexers             List configured indexers.
     cuff categories           List torrent categories.
     cuff config               Show Jackett config (json).
