@@ -295,7 +295,7 @@ if [ -n "$START" ] && ! check_jackett ; then
     sudo systemctl start jackett.service > /dev/null
     # Wait until the server is repsonsive, max of 5s
     for((i=0; i < 10; i++)); do
-      curl --silent $JACKETT_URL > /dev/null && break || sleep 0.5
+        { curl --silent "$JACKETT_URL" > /dev/null && break; } || sleep 0.5
     done
 fi
 
@@ -370,7 +370,7 @@ case "$subcommand" in
 
         JQ_ARG=".Results"
         [ -n "$SORTKEY" ] && JQ_ARG="$JQ_ARG | sort_by(.$SORTKEY) | reverse"
-        [ -n "$FORMAT" ] && JQ_ARG="$JQ_ARG[] | \"$FORMAT\""
+        [ -n "$FORMAT" ] && JQ_ARG="${JQ_ARG}[] | \"$FORMAT\""
         msg 2 "jq filter: \"$JQ_ARG\""
         # Make the query
         search "$QUERY" "${FILTER_CATEGORIES[*]}" "${FILTER_TRACKERS[*]}" "$JQ_ARG"
