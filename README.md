@@ -4,6 +4,8 @@
 
 Query the [Jackett](https://github.com/jackett/jackett) search API from the command line.
 
+**Prefer a UI? Check out [`rofi-cuff`](https://github.com/loiccoyle/rofi-cuff)**
+
 # Installation
 
 ### Dependencies
