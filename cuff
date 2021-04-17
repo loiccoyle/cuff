@@ -287,6 +287,10 @@ case "$subcommand" in
         usage
         exit 0
         ;;
+    * )
+        usage >&2
+        err_msg_exit "Invalid argument \"$subcommand\" should be either 'search', 'config', 'indexers' 'categories', or 'open'."
+        ;;
 esac
 
 # Start Jackett
@@ -380,9 +384,5 @@ case "$subcommand" in
         ;;
     "indexers" )
         indexers
-        ;;
-    * )
-        usage >&2
-        err_msg_exit "Invalid argument \"$subcommand\" should be either 'search', 'config', 'indexers' 'categories', or 'open'."
         ;;
 esac
