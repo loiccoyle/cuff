@@ -1,4 +1,5 @@
 # Cuff
+
 <a href="./LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
 <a href="https://aur.archlinux.org/packages/cuff-git/"><img src="https://img.shields.io/aur/version/cuff-git"></a>
 
@@ -11,13 +12,15 @@ Query the [Jackett](https://github.com/jackett/jackett) search API from the comm
 ### Dependencies
 
 If you are installing manually, you'll need to also install the following dependencies:
-* [`curl`](https://github.com/curl/curl)
-* [`jq`](https://github.com/stedolan/jq)
-* Access to a [`jackett`](https://github.com/jackett/jackett) server.
+
+- [`curl`](https://github.com/curl/curl)
+- [`jq`](https://github.com/stedolan/jq)
+- Access to a [`jackett`](https://github.com/jackett/jackett) server.
 
 ### Manual
 
 To manually install `cuff` just git clone this repository and place the script in your `$PATH`:
+
 ```
 git clone https://github.com/loiccoyle/cuff
 cd cuff
@@ -29,6 +32,7 @@ If you want <TAB> completion, place the corresponding [`completion`](completions
 ### Arch linux
 
 Using your prefered AUR helper:
+
 ```
 paru -S cuff-git
 ```
@@ -75,6 +79,11 @@ Examples:
     $ cuff search -f '\(.Title)|\(.MagnetUri//.Link)' ubuntu | column -t -s"|"
 ```
 
+# Note
+
+To use the `-s` and `-k` options to start and stop the `jackett` service before/after making a query, will require `sudo` access.
+
 # TODO
+
 - [x] AUR package
 - [ ] write bash completion
