@@ -13,15 +13,15 @@ CATEGORIES["console/nds"]="1010"
 CATEGORIES["console/psp"]="1020"
 CATEGORIES["console/wii"]="1030"
 CATEGORIES["console/xbox"]="1040"
-CATEGORIES["console/xbox 360"]="1050"
+CATEGORIES["console/xbox-360"]="1050"
 CATEGORIES["console/wiiware"]="1060"
-CATEGORIES["console/xbox 360 dlc"]="1070"
+CATEGORIES["console/xbox-360-dlc"]="1070"
 CATEGORIES["console/ps3"]="1080"
 CATEGORIES["console/other"]="1090"
 CATEGORIES["console/3ds"]="1110"
-CATEGORIES["console/ps vita"]="1120"
+CATEGORIES["console/ps-vita"]="1120"
 CATEGORIES["console/wiiu"]="1130"
-CATEGORIES["console/xbox one"]="1140"
+CATEGORIES["console/xbox-one"]="1140"
 CATEGORIES["console/ps4"]="1180"
 CATEGORIES["movies"]="2000"
 CATEGORIES["movies/foreign"]="2010"
@@ -84,7 +84,7 @@ CATEGORIES["other/hashed"]="8020"
 OPEN_CMD="${BROWSER:-${OPENER:-"xdg-open"}}"
 
 # Formating codes
-if type tput > /dev/null; then
+if type tput >/dev/null; then
     BOLD="$(tput bold)"
     RESET="$(tput sgr0)"
     COLOR1="$(tput setaf 1)"
@@ -108,9 +108,9 @@ msg() {
 }
 
 # Check requirements
-type curl > /dev/null || err_msg_exit "'curl' not found."
-type jq > /dev/null || err_msg_exit "'jq' not found."
-systemctl list-unit-files jackett.service > /dev/null || err_msg_exit "'jackett.service' not found."
+type curl >/dev/null || err_msg_exit "'curl' not found."
+type jq >/dev/null || err_msg_exit "'jq' not found."
+systemctl list-unit-files jackett.service >/dev/null || err_msg_exit "'jackett.service' not found."
 
 usage() {
     printf "%sQuery the Jackett search API from the command line.%s
@@ -145,32 +145,34 @@ usage() {
     %s$ %s search -s Seeders ubuntu%s
     Search for ubuntu and output the title and link, format with column.
     %s$ %s search -f '\(.Title)|\(.MagnetUri//.Link)' ubuntu | column -t -s\"|\"%s
-" "$BOLD" "$RESET"\
-  "$BOLD" "$RESET" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$OPEN_CMD"\
-  "$BOLD" "$RESET"\
-    "$COLOR2" "$CMD_NAME" "$RESET"\
-    "$COLOR2" "$CMD_NAME" "$RESET"\
-    "$COLOR2" "$CMD_NAME" "$RESET"\
-    "$COLOR2" "$CMD_NAME" "$RESET"
+" "$BOLD" "$RESET" \
+        "$BOLD" "$RESET" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$CMD_NAME" "$OPEN_CMD" \
+        "$BOLD" "$RESET" \
+        "$COLOR2" "$CMD_NAME" "$RESET" \
+        "$COLOR2" "$CMD_NAME" "$RESET" \
+        "$COLOR2" "$CMD_NAME" "$RESET" \
+        "$COLOR2" "$CMD_NAME" "$RESET"
 }
 
 has_jackett() {
     # Check to see if the jackett service file is installed.
-    systemctl list-unit-files jackett.service > /dev/null
+    systemctl list-unit-files jackett.service >/dev/null
 }
 
 check_jackett() {
     # Check if the Jackett service is active.
-    systemctl is-active jackett.service > /dev/null
+    systemctl is-active jackett.service >/dev/null
 }
 
 stop_jackett() {
     # Stop the jackett service if it is running.
-    check_jackett && { msg 1 "Stopping Jackett."; sudo systemctl stop jackett.service; }
+    check_jackett \
+        && msg 1 "Stopping Jackett." \
+        && sudo systemctl stop jackett.service
 }
 
 check_url() {
-    curl --silent "$JACKETT_URL" > /dev/null
+    curl --silent "$JACKETT_URL" >/dev/null
 }
 
 join_by() {
@@ -199,7 +201,7 @@ indexers() {
     # Query Jackett for the configured indexers.
     local endpoint="indexers"
     local url="$JACKETT_URL/$API_ROOT/$endpoint?$ID_PARAMETER"
-    curl --silent "$url"\
+    curl --silent "$url" \
         -H "$COOKIE_HEADER" | jq -r ".[] | select(.configured == true).id"
 }
 
@@ -220,10 +222,10 @@ search() {
     [ "${#trackers[@]}" -gt 0 ] && tracker_str="&Tracker%5B%5D=$(join_by '&Tracker%5B%5D=' "${trackers[@]}")"
     local endpoint="indexers/all/results?${tracker_str}${category_str}&${ID_PARAMETER}"
     local url="$JACKETT_URL/$API_ROOT/$endpoint"
-    curl --silent -G "$url"\
-        -H "$COOKIE_HEADER"\
-        --data-urlencode "Query=$query"\
-        --data-urlencode "apikey=$API_KEY"\
+    curl --silent -G "$url" \
+        -H "$COOKIE_HEADER" \
+        --data-urlencode "Query=$query" \
+        --data-urlencode "apikey=$API_KEY" \
         --compressed | $JQ_COMMAND "$jq_arg"
 }
 
@@ -238,7 +240,7 @@ JQ_COMMAND="jq"
 # Parse options to the command
 while getopts ":rhvsku:a:p:" opt; do
     case ${opt} in
-        "r" )
+        "r")
             BOLD=""
             RESET=""
             COLOR1=""
@@ -246,73 +248,73 @@ while getopts ":rhvsku:a:p:" opt; do
             JQ_COMMAND="jq --monochrome-output -r"
             msg 2 "Raw output."
             ;;
-        "h" )
+        "h")
             usage
             exit 0
             ;;
-        "v" )
+        "v")
             VERBOSE=$((VERBOSE + 1))
             ;;
-        "s" )
+        "s")
             has_jackett || err_msg_exit "No jackett service file found."
             START=1
             ;;
-        "k" )
+        "k")
             has_jackett || err_msg_exit "No jackett service file found."
             STOP=1
             ;;
-        "u" )
+        "u")
             JACKETT_URL="$OPTARG"
             msg 2 "Using Jackett url: \"$JACKETT_URL\""
             ;;
-        "a" )
+        "a")
             API_KEY="$OPTARG"
             msg 2 "Using API key: \"$API_KEY\""
             ;;
-        "p" )
+        "p")
             PASSWORD="$OPTARG"
             msg 2 "Using password: \"$PASSWORD\""
             ;;
-        "?" )
+        "?")
             usage >&2
             err_msg_exit "Invalid Option: -$OPTARG"
             ;;
     esac
 done
-shift $((OPTIND -1))
+shift $((OPTIND - 1))
 
 # Subcommands which don't require Jackett to be running.
 subcommand="$1"
 case "$subcommand" in
-    "categories" )
+    "categories")
         # Show keys of associative array
         # from: https://stackoverflow.com/questions/53740886/bash-associative-array-iteration-ordered-and-without-duplicates
         printf "%s\n" "${!CATEGORIES[@]}" | sort
         exit 0
         ;;
-    "open" )
+    "open")
         msg 1 "Opening with \"$OPEN_CMD\""
         $OPEN_CMD "$JACKETT_URL" && exit 0
         ;;
-    "" )
+    "")
         usage
         exit 0
         ;;
-    "search" | "config" | "indexers" )
-      # Just to not trigger invalid argument here.
-      ;;
-    * )
+    "search" | "config" | "indexers")
+        # Just to not trigger invalid argument here.
+        ;;
+    *)
         usage >&2
         err_msg_exit "Invalid argument \"$subcommand\" should be either 'search', 'config', 'indexers' 'categories', or 'open'."
         ;;
 esac
 
 # Start Jackett
-if [ -n "$START" ] && ! check_jackett ; then
+if [ -n "$START" ] && ! check_jackett; then
     msg 1 "Starting Jackett"
-    sudo systemctl start jackett.service > /dev/null
+    sudo systemctl start jackett.service >/dev/null
     # Wait until the server is repsonsive, max of 5s
-    for((i=0; i < 10; i++)); do
+    for ((i = 0; i < 10; i++)); do
         { check_url && break; } || sleep 0.5
     done
 fi
@@ -348,36 +350,36 @@ SORTKEY=""
 
 case "$subcommand" in
     # Parse options of the subcommand
-    "search" )
+    "search")
         # Remove subcommand from the argument list
         shift
         # Reset position of argument parsing
         OPTIND=0
         while getopts ":f:c:t:s:" opt; do
             case ${opt} in
-                "f" )
+                "f")
                     FORMAT="$OPTARG"
                     ;;
-                "c" )
+                "c")
                     FILTER_CATEGORIES+=("${CATEGORIES[$OPTARG]}")
                     ;;
-                "t" )
+                "t")
                     FILTER_TRACKERS+=("$OPTARG")
                     ;;
-                "s" )
+                "s")
                     SORTKEY="$OPTARG"
                     ;;
-                ":" )
+                ":")
                     usage >&2
                     err_msg_exit "Missing argument for option -$OPTARG"
                     ;;
-                "?" )
+                "?")
                     usage >&2
                     err_msg_exit "Invalid Option: -$OPTARG"
                     ;;
             esac
         done
-        shift $((OPTIND -1))
+        shift $((OPTIND - 1))
         QUERY="$*"
         # [ -z "$QUERY" ] && usage >&2 && err_msg_exit "No search query provided."
         msg 2 "Trackers: ${FILTER_TRACKERS[*]}"
@@ -393,10 +395,10 @@ case "$subcommand" in
         # Make the query
         search "$QUERY" "${FILTER_CATEGORIES[*]}" "${FILTER_TRACKERS[*]}" "$JQ_ARG"
         ;;
-    "config" )
+    "config")
         config
         ;;
-    "indexers" )
+    "indexers")
         indexers
         ;;
 esac
