@@ -116,7 +116,7 @@ usage() {
     printf "%sQuery the Jackett search API from the command line.%s
 
 %sUsage:%s
-    %s [OPTIONS] {search, config, indexers, categories, open}
+    %s {search, config, indexers, categories, open} [OPTIONS]
         -h                        Show this message and exit.
         -r                        Raw output, no coloring.
         -v                        Verbosisty, up to -vv.
