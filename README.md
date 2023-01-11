@@ -7,6 +7,8 @@ Query the [Jackett](https://github.com/jackett/jackett) search API from the comm
 
 **Prefer a UI? Check out [`rofi-cuff`](https://github.com/loiccoyle/rofi-cuff)**
 
+**Do you use [`Prowlarr`](https://github.com/prowlarr/prowlarr) instead of `Jackett`? Check out [`prowlet`](https://github.com/loiccoyle/prowlet) / [`rofi-prowlet`](https://github.com/loiccoyle/rofi-prowlet)**
+
 # Installation
 
 ### Dependencies
